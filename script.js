@@ -108,8 +108,6 @@ function handleFileSelect(e) {
         
         // 直接调用自动上传函数
         uploadFilesAuto(files);
-        // 清空文件输入，防止重复选择
-        e.target.value = '';
     }
 }
 
@@ -163,9 +161,6 @@ function uploadFilesAuto(files) {
                 // 重置进度
                 progressBar.style.width = '0%';
                 progressText.textContent = '0%';
-                
-                // 清空文件输入
-                fileInput.value = '';
                 
                 // 重置上传区域
                 resetUploadArea();

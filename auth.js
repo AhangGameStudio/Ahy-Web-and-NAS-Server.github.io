@@ -105,27 +105,8 @@ async function addUser(username, password) {
         // 保存更新后的数据到localStorage
         localStorage.setItem('userDatabase', updatedData);
         
-        // 通过API将新用户信息发送到服务器
-        try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('API注册失败:', errorData.message || '未知错误');
-            } else {
-                const result = await response.json();
-                console.log('用户通过API注册成功:', result);
-            }
-        } catch (apiError) {
-            console.error('API调用失败:', apiError);
-            // 即使API调用失败，我们仍然在本地保存用户数据
-        }
+        // 为静态网站创建用户目录
+        createUserDirectory(username);
         
         console.log(`用户 ${username} 已添加到数据库`);
         

@@ -105,33 +105,28 @@ async function checkUserExistsAsync(newUsername) {
 // 异步保存新用户
 async function saveNewUserAsync(username, password) {
     try {
-        // 尝试使用auth.js模块中的函数
+        // 使用auth.js模块中的函数添加用户
         if (typeof addUser === 'function') {
-            // 先尝试使用本地函数
-            try {
-                return await addUser(username, password);
-            } catch (localError) {
-                // 如果本地函数失败，继续尝试API方式
-                console.log('本地注册失败，尝试通过API注册');
-            }
+            return await addUser(username, password);
         }
         
-        // 通过API将新用户信息发送到服务器
-        const response = await fetch('/www.ahangya.cyou/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || '注册失败');
+        // 备用实现：直接操作localStorage
+        // 检查用户是否已存在
+        const userExists = await checkUserExistsAsync(username);
+        if (userExists) {
+            throw new Error('用户名已存在');
         }
         
-        const result = await response.json();
-        console.log('用户注册成功:', result);
+        // 添加新用户到localStorage
+        const userData = localStorage.getItem('userDatabase') || '';
+        const newUserEntry = `\n${username}:${password}`;
+        const updatedData = userData + newUserEntry;
+        localStorage.setItem('userDatabase', updatedData);
+        
+        // 创建用户目录
+        createUserDirectory(username);
+        
+        console.log(`用户 ${username} 已添加到数据库`);
         return true;
     } catch (error) {
         console.error('保存新用户时出错:', error);
