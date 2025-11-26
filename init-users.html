@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>初始化用户数据</title>
+</head>
+<body>
+    <h1>初始化用户数据</h1>
+    <script>
+        // 初始化用户数据库到localStorage
+        const defaultUsers = `# 用户登录信息文件
+# 格式: username:password
+# 示例:
+admin:123456
+user:password`;
+
+        localStorage.setItem('userDatabase', defaultUsers);
+        console.log('用户数据库已初始化到localStorage');
+        alert('用户数据库已初始化到localStorage');
+        
+        // 显示localStorage中的数据
+        console.log('localStorage中的用户数据:', localStorage.getItem('userDatabase'));
+    </script>
+</body>
+</html>

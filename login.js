@@ -27,16 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function validateCredentials(username, password) {
     try {
-        // 动态加载认证模块
-        const authScript = document.createElement('script');
-        authScript.src = 'auth.js';
-        document.head.appendChild(authScript);
-        
-        // 等待脚本加载完成
-        await new Promise(resolve => {
-            authScript.onload = resolve;
-        });
-        
         // 使用认证模块验证凭据
         const isAuthenticated = await validateCredentialsAsync(username, password);
         
@@ -63,6 +53,12 @@ async function validateCredentials(username, password) {
 // 异步验证凭据函数
 async function validateCredentialsAsync(username, password) {
     try {
+        // 直接使用auth.js模块中的函数
+        if (typeof validateCredentials === 'function') {
+            return await validateCredentials(username, password);
+        }
+        
+        // 备用实现
         // 尝试从localStorage获取用户数据
         const userData = localStorage.getItem('userDatabase');
         if (userData) {

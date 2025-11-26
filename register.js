@@ -23,16 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function registerUser(username, password) {
     try {
-        // 动态加载认证模块
-        const authScript = document.createElement('script');
-        authScript.src = 'auth.js';
-        document.head.appendChild(authScript);
-        
-        // 等待脚本加载完成
-        await new Promise(resolve => {
-            authScript.onload = resolve;
-        });
-        
         // 检查用户是否已存在
         const userExists = await checkUserExistsAsync(username);
         
@@ -51,6 +41,12 @@ async function registerUser(username, password) {
 // 异步检查用户是否存在
 async function checkUserExistsAsync(newUsername) {
     try {
+        // 直接使用auth.js模块中的函数
+        if (typeof checkUserExists === 'function') {
+            return await checkUserExists(newUsername);
+        }
+        
+        // 备用实现
         // 尝试从localStorage获取用户数据
         const userData = localStorage.getItem('userDatabase');
         if (userData) {
@@ -103,26 +99,32 @@ async function checkUserExistsAsync(newUsername) {
 // 异步保存新用户
 async function saveNewUserAsync(username, password) {
     try {
-        // 获取现有的用户数据
-        let userData = '';
-        try {
-            const response = await fetch('Login/user.txt');
-            if (response.ok) {
-                userData = await response.text();
-                // 保存到localStorage以便后续使用
-                localStorage.setItem('userDatabase', userData);
+        // 直接使用auth.js模块中的函数
+        if (typeof addUser === 'function') {
+            await addUser(username, password);
+        } else {
+            // 备用实现
+            // 获取现有的用户数据
+            let userData = '';
+            try {
+                const response = await fetch('Login/user.txt');
+                if (response.ok) {
+                    userData = await response.text();
+                    // 保存到localStorage以便后续使用
+                    localStorage.setItem('userDatabase', userData);
+                }
+            } catch (error) {
+                // 如果无法从文件加载，则从localStorage获取
+                userData = localStorage.getItem('userDatabase') || '';
             }
-        } catch (error) {
-            // 如果无法从文件加载，则从localStorage获取
-            userData = localStorage.getItem('userDatabase') || '';
+            
+            // 添加新用户
+            const newUserEntry = `\n${username}:${password}`;
+            const updatedData = userData + newUserEntry;
+            
+            // 保存更新后的数据到localStorage
+            localStorage.setItem('userDatabase', updatedData);
         }
-        
-        // 添加新用户
-        const newUserEntry = `\n${username}:${password}`;
-        const updatedData = userData + newUserEntry;
-        
-        // 保存更新后的数据到localStorage
-        localStorage.setItem('userDatabase', updatedData);
         
         // 创建用户专属目录
         createUserDirectory(username);

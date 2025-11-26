@@ -102,21 +102,6 @@ async function addUser(username, password) {
         // 保存更新后的数据到localStorage
         localStorage.setItem('userDatabase', updatedData);
         
-        // 同时尝试更新user.txt文件（在真实服务器环境中）
-        // 在纯前端环境中这不会真正写入文件系统
-        try {
-            await fetch('Login/user.txt', {
-                method: 'PUT',
-                body: updatedData,
-                headers: {
-                    'Content-Type': 'text/plain'
-                }
-            });
-        } catch (fileError) {
-            console.warn('无法更新user.txt文件:', fileError);
-            // 这在纯前端环境中是预期的，因为我们无法直接写入文件系统
-        }
-        
         return true;
     } catch (error) {
         console.error('添加用户时出错:', error);

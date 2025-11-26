@@ -6,7 +6,6 @@ let uploadedFiles = JSON.parse(localStorage.getItem(FILES_KEY)) || [];
 // DOM元素
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
 const progressContainer = document.getElementById('progressContainer');
 const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleDrop);
     fileInput.addEventListener('change', handleFileSelect);
-    uploadBtn.addEventListener('click', uploadFiles);
     
     // 过滤按钮事件
     filterButtons.forEach(btn => {
@@ -40,9 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderFiles(filterType);
         });
     });
-    
-    // 初始化上传按钮状态
-    uploadBtn.disabled = true;
 });
 
 // 处理上传区域点击事件
@@ -124,73 +119,12 @@ function handleFileSelect(e) {
 function resetUploadArea() {
     uploadArea.querySelector('.upload-placeholder p').innerHTML = 
         '点击选择文件或拖拽文件到此处<br><span class="file-types">支持视频、图片、音频、文档等各类文件</span>';
-    uploadBtn.disabled = true;
     // 重新启用上传区域点击事件
     uploadArea.style.pointerEvents = 'auto';
     uploadArea.style.opacity = '1';
 }
 
-// 上传文件函数（手动点击上传按钮）
-function uploadFiles() {
-    const files = Array.from(fileInput.files);
-    
-    if (files.length === 0) {
-        alert('请选择要上传的文件');
-        return;
-    }
-    
-    // 验证文件
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (!file.name || file.size <= 0) {
-            alert('检测到无效文件，请重新选择文件');
-            return;
-        }
-    }
-    
-    // 禁用上传区域点击事件，防止重复选择
-    uploadArea.style.pointerEvents = 'none';
-    uploadArea.style.opacity = '0.8';
-    
-    // 显示进度条
-    progressContainer.style.display = 'block';
-    
-    // 模拟上传过程
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(interval);
-            
-            // 上传完成后保存文件信息
-            try {
-                saveFiles(files);
-            } catch (error) {
-                console.error('上传失败:', error);
-                alert('文件上传过程中发生错误，请重试');
-            }
-            
-            // 隐藏进度条
-            setTimeout(() => {
-                progressContainer.style.display = 'none';
-                // 重置进度
-                progressBar.style.width = '0%';
-                progressText.textContent = '0%';
-                
-                // 清空文件输入
-                fileInput.value = '';
-                
-                // 重置上传区域
-                resetUploadArea();
-            }, 500);
-        }
-        
-        // 更新进度条
-        progressBar.style.width = progress + '%';
-        progressText.textContent = Math.round(progress) + '%';
-    }, 200);
-}
+
 
 // 自动上传文件函数（选择文件后自动上传）
 function uploadFilesAuto(files) {
