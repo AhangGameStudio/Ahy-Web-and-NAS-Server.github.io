@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云NAS存储系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>云NAS存储系统</h1>
+            <p>安全存储您的视频、图片、音频和文件</p>
+        </header>
+        
+        <main>
+            <section class="upload-section">
+                <h2>上传文件</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-placeholder">
+                        <p>点击选择文件或拖拽文件到此处</p>
+                        <p class="file-types">支持视频、图片、音频、文档等各类文件</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple>
+                </div>
+                <button id="uploadBtn" class="upload-btn">开始上传</button>
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <span class="progress-text" id="progressText">0%</span>
+                </div>
+            </section>
+            
+            <section class="files-section">
+                <h2>我的文件</h2>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="image">图片</button>
+                    <button class="filter-btn" data-filter="video">视频</button>
+                    <button class="filter-btn" data-filter="audio">音频</button>
+                    <button class="filter-btn" data-filter="document">文档</button>
+                </div>
+                <div class="files-grid" id="filesGrid">
+                    <!-- 文件列表将在这里显示 -->
+                    <div class="empty-state">
+                        <p>暂无文件，请先上传文件</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2023 云NAS存储系统. 保留所有权利.</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
