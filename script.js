@@ -15,6 +15,9 @@ const filterButtons = document.querySelectorAll('.filter-btn');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
+    // 检查用户是否已登录
+    checkLoginStatus();
+    
     renderFiles();
     
     // 事件监听器
@@ -42,6 +45,36 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadBtn.disabled = true;
 });
 
+// 检查用户登录状态
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+        // 用户未登录，重定向到登录页面
+        window.location.href = 'login.html';
+    } else {
+        // 用户已登录，显示用户信息
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            document.getElementById('currentUser').textContent = `欢迎, ${currentUser}!`;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // 初始化NAS组功能
+            initNASGroupFeature();
+        }
+    }
+}
+
+// 注销功能
+function logout() {
+    // 清除登录状态
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+    
+    // 重定向到登录页面
+    window.location.href = 'login.html';
+}
+
 // 拖拽事件处理
 function handleDragOver(e) {
     e.preventDefault();
@@ -58,42 +91,22 @@ function handleDrop(e) {
     uploadArea.classList.remove('dragover');
     
     const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
+    if (files.length > 0) {
+        uploadFilesAuto(files);
+    }
 }
 
 function handleFileSelect(e) {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-        handleFiles(files);
-    } else {
-        // 如果用户取消了文件选择，恢复原始提示
-        resetUploadArea();
+        // 直接调用自动上传函数
+        uploadFilesAuto(files);
+        // 清空文件输入，防止重复选择
+        e.target.value = '';
     }
 }
 
-function handleFiles(files) {
-    // 在这里我们可以预览选中的文件
-    console.log('Selected files:', files);
-    
-    // 如果选择了文件，立即开始上传
-    if (files.length > 0) {
-        // 禁用上传区域点击事件，防止重复选择
-        uploadArea.style.pointerEvents = 'none';
-        uploadArea.style.opacity = '0.8';
-        
-        // 显示选中的文件数量
-        const fileCount = files.length;
-        const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0);
-        uploadArea.querySelector('.upload-placeholder p').innerHTML = 
-            `已选择 ${fileCount} 个文件，总大小: ${formatFileSize(totalSize)}<br>正在上传...`;
-        
-        // 自动开始上传
-        uploadFilesAuto(files);
-    } else {
-        // 如果没有选择文件，重置上传区域
-        resetUploadArea();
-    }
-}
+
 
 // 重置上传区域到初始状态
 function resetUploadArea() {

@@ -1,0 +1,5 @@
+# 用户登录信息文件
+# 格式: username:password
+# 示例:
+admin:123456
+user:password
