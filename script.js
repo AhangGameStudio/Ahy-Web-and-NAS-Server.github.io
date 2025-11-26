@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderFiles();
     
     // 事件监听器
-    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('click', handleUploadAreaClick);
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleDrop);
@@ -44,6 +44,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化上传按钮状态
     uploadBtn.disabled = true;
 });
+
+// 处理上传区域点击事件
+function handleUploadAreaClick() {
+    // 只有当上传区域可用时才触发文件选择
+    if (uploadArea.style.pointerEvents !== 'none') {
+        fileInput.click();
+    }
+}
 
 // 检查用户登录状态
 function checkLoginStatus() {
@@ -99,6 +107,10 @@ function handleDrop(e) {
 function handleFileSelect(e) {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+        // 禁用上传区域点击事件，防止重复选择
+        uploadArea.style.pointerEvents = 'none';
+        uploadArea.style.opacity = '0.8';
+        
         // 直接调用自动上传函数
         uploadFilesAuto(files);
         // 清空文件输入，防止重复选择

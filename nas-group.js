@@ -70,7 +70,9 @@ function displayNASGroupInfo(username) {
         // 如果页面中有显示NAS组信息的元素，则更新它
         const nasGroupInfoElement = document.getElementById('nasGroupInfo');
         if (nasGroupInfoElement) {
-            nasGroupInfoElement.textContent = `您的NAS组路径: ${nasGroupPath}`;
+            nasGroupInfoElement.textContent = `NAS组: ${username}`;
+            // 添加title属性显示完整路径
+            nasGroupInfoElement.title = `路径: ${nasGroupPath}`;
         }
     }
 }
