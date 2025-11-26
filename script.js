@@ -83,6 +83,9 @@ function handleFiles(files) {
         const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0);
         uploadArea.querySelector('.upload-placeholder p').innerHTML = 
             `已选择 ${fileCount} 个文件，总大小: ${formatFileSize(totalSize)}<br>点击"开始上传"按钮上传文件`;
+    } else {
+        // 如果没有选择文件，重置上传区域
+        resetUploadArea();
     }
 }
 
