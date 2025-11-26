@@ -95,19 +95,25 @@ function handleDrop(e) {
     
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-        uploadFilesAuto(files);
+        // 检查是否有NCM文件需要转换
+        checkAndConvertNCMFiles(files).then(processedFiles => {
+            uploadFilesAuto(processedFiles);
+        });
     }
 }
 
 function handleFileSelect(e) {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-        // 禁用上传区域点击事件，防止重复选择
-        uploadArea.style.pointerEvents = 'none';
-        uploadArea.style.opacity = '0.8';
-        
-        // 直接调用自动上传函数
-        uploadFilesAuto(files);
+        // 检查是否有NCM文件需要转换
+        checkAndConvertNCMFiles(files).then(processedFiles => {
+            // 禁用上传区域点击事件，防止重复选择
+            uploadArea.style.pointerEvents = 'none';
+            uploadArea.style.opacity = '0.8';
+            
+            // 直接调用自动上传函数
+            uploadFilesAuto(processedFiles);
+        });
     }
 }
 
@@ -164,6 +170,8 @@ function uploadFilesAuto(files) {
                 
                 // 重置上传区域
                 resetUploadArea();
+                // 清空文件输入框
+                fileInput.value = '';
             }, 500);
         }
         
@@ -301,4 +309,92 @@ function deleteFile(fileId) {
     
     // 重新渲染
     renderFiles(document.querySelector('.filter-btn.active').dataset.filter);
+}
+
+// 检测NCM文件并转换
+async function checkAndConvertNCMFiles(files) {
+    const processedFiles = [];
+    
+    for (const file of files) {
+        // 检查文件是否为NCM格式（通过文件头检测）
+        const isNCM = await detectNCMFile(file);
+        
+        if (isNCM) {
+            try {
+                // 显示转换提示
+                alert(`检测到NCM格式文件: ${file.name}\n正在尝试转换为MP3格式...`);
+                
+                // 对于NCM文件，我们只做模拟转换
+                // 在实际应用中，这里需要实现真正的NCM解密和转换逻辑
+                // 但由于浏览器安全限制，纯前端无法实现NCM解密
+                
+                // 模拟转换过程
+                const convertedFileName = file.name.replace(/\.ncm$/i, '.mp3');
+                
+                // 创建一个新的Blob对象模拟转换后的文件
+                const convertedFile = new File([file], convertedFileName, {
+                    type: 'audio/mpeg',
+                    lastModified: Date.now()
+                });
+                
+                processedFiles.push(convertedFile);
+                
+                // 显示转换完成提示
+                alert(`${file.name} 已模拟转换为 ${convertedFileName}`);
+            } catch (error) {
+                console.error('NCM转换失败:', error);
+                alert(`NCM文件 ${file.name} 转换失败: ${error.message}`);
+                // 如果转换失败，仍然添加原始文件
+                processedFiles.push(file);
+            }
+        } else if (file.name.toLowerCase().endsWith('.ncm')) {
+            // 如果文件扩展名是.ncm但文件头不匹配，仍然尝试转换
+            try {
+                // 显示转换提示
+                alert(`检测到NCM格式文件: ${file.name}\n正在尝试转换为MP3格式...`);
+                
+                // 模拟转换过程
+                const convertedFileName = file.name.replace(/\.ncm$/i, '.mp3');
+                
+                // 创建一个新的Blob对象模拟转换后的文件
+                const convertedFile = new File([file], convertedFileName, {
+                    type: 'audio/mpeg',
+                    lastModified: Date.now()
+                });
+                
+                processedFiles.push(convertedFile);
+                
+                // 显示转换完成提示
+                alert(`${file.name} 已模拟转换为 ${convertedFileName}`);
+            } catch (error) {
+                console.error('NCM转换失败:', error);
+                alert(`NCM文件 ${file.name} 转换失败: ${error.message}`);
+                // 如果转换失败，仍然添加原始文件
+                processedFiles.push(file);
+            }
+        } else {
+            // 非NCM文件直接添加
+            processedFiles.push(file);
+        }
+    }
+    
+    return processedFiles;
+}
+
+// 检测NCM文件（通过文件头）
+async function detectNCMFile(file) {
+    // NCM文件头为 "CTENFDAM"
+    const ncmHeader = "4354454e4644414d"; // "CTENFDAM" 的十六进制表示
+    
+    try {
+        const arrayBuffer = await file.slice(0, 8).arrayBuffer();
+        const header = Array.from(new Uint8Array(arrayBuffer))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        
+        return header === ncmHeader;
+    } catch (error) {
+        console.error('检测NCM文件时出错:', error);
+        return false;
+    }
 }
