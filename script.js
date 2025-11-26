@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', function() {
             renderFiles(filterType);
         });
     });
+    
+    // 初始化上传按钮状态
+    uploadBtn.disabled = true;
 });
 
 // 拖拽事件处理
@@ -60,12 +63,34 @@ function handleDrop(e) {
 
 function handleFileSelect(e) {
     const files = Array.from(e.target.files);
-    handleFiles(files);
+    if (files.length > 0) {
+        handleFiles(files);
+    } else {
+        // 如果用户取消了文件选择，恢复原始提示
+        resetUploadArea();
+    }
 }
 
 function handleFiles(files) {
     // 在这里我们可以预览选中的文件
     console.log('Selected files:', files);
+    
+    // 如果选择了文件，启用上传按钮
+    if (files.length > 0) {
+        uploadBtn.disabled = false;
+        // 显示选中的文件数量
+        const fileCount = files.length;
+        const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0);
+        uploadArea.querySelector('.upload-placeholder p').innerHTML = 
+            `已选择 ${fileCount} 个文件，总大小: ${formatFileSize(totalSize)}<br>点击"开始上传"按钮上传文件`;
+    }
+}
+
+// 重置上传区域到初始状态
+function resetUploadArea() {
+    uploadArea.querySelector('.upload-placeholder p').innerHTML = 
+        '点击选择文件或拖拽文件到此处<br><span class="file-types">支持视频、图片、音频、文档等各类文件</span>';
+    uploadBtn.disabled = true;
 }
 
 // 上传文件函数
@@ -100,6 +125,9 @@ function uploadFiles() {
                 
                 // 清空文件输入
                 fileInput.value = '';
+                
+                // 重置上传区域
+                resetUploadArea();
             }, 500);
         }
         
