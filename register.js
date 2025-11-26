@@ -21,13 +21,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function registerUser(username, password) {
-    // 检查用户是否已存在
-    fetch('Login/user.txt')
-        .then(response => response.text())
-        .then(data => {
-            const lines = data.split('\n');
-            let userExists = false;
+async function registerUser(username, password) {
+    try {
+        // 动态加载认证模块
+        const authScript = document.createElement('script');
+        authScript.src = 'auth.js';
+        document.head.appendChild(authScript);
+        
+        // 等待脚本加载完成
+        await new Promise(resolve => {
+            authScript.onload = resolve;
+        });
+        
+        // 检查用户是否已存在
+        const userExists = await checkUserExistsAsync(username);
+        
+        if (userExists) {
+            alert('用户名已存在，请选择其他用户名。');
+        } else {
+            // 保存新用户
+            await saveNewUserAsync(username, password);
+        }
+    } catch (error) {
+        console.error('注册过程中发生错误:', error);
+        alert('注册过程中发生错误，请重试。');
+    }
+}
+
+// 异步检查用户是否存在
+async function checkUserExistsAsync(newUsername) {
+    try {
+        // 尝试从localStorage获取用户数据
+        const userData = localStorage.getItem('userDatabase');
+        if (userData) {
+            const lines = userData.split('\n');
             
             for (const line of lines) {
                 if (line.trim() === '' || line.startsWith('#')) {
@@ -36,51 +63,76 @@ function registerUser(username, password) {
                 
                 const [storedUsername, storedPassword] = line.split(':');
                 
-                if (storedUsername === username) {
-                    userExists = true;
-                    break;
+                if (storedUsername === newUsername) {
+                    return true;
                 }
             }
-            
-            if (userExists) {
-                alert('用户名已存在，请选择其他用户名。');
-            } else {
-                // 保存新用户到user.txt文件
-                saveNewUser(username, password);
+            return false;
+        }
+        
+        // 如果localStorage中没有数据，则从user.txt文件加载
+        const response = await fetch('Login/user.txt');
+        if (!response.ok) {
+            throw new Error('无法加载用户数据');
+        }
+        
+        const data = await response.text();
+        // 保存到localStorage以便后续使用
+        localStorage.setItem('userDatabase', data);
+        
+        const lines = data.split('\n');
+        for (const line of lines) {
+            if (line.trim() === '' || line.startsWith('#')) {
+                continue;
             }
-        })
-        .catch(error => {
-            console.error('Error reading user file:', error);
-            alert('注册过程中发生错误，请重试。');
-        });
+            
+            const [storedUsername, storedPassword] = line.split(':');
+            
+            if (storedUsername === newUsername) {
+                return true;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.error('检查用户是否存在时出错:', error);
+        return false;
+    }
 }
 
-function saveNewUser(username, password) {
-    // 在实际应用中，这里会将新用户保存到服务器
-    // 由于这是一个前端应用，我们将用户信息保存到本地存储
-    
-    // 获取现有的用户数据
-    fetch('Login/user.txt')
-        .then(response => response.text())
-        .then(data => {
-            // 添加新用户
-            const newUserEntry = `\n${username}:${password}`;
-            const updatedData = data + newUserEntry;
-            
-            // 保存更新后的数据（在实际应用中，这里会发送到服务器）
-            // 对于前端演示，我们将数据保存到localStorage
-            localStorage.setItem('userDatabase', updatedData);
-            
-            // 创建用户专属目录
-            createUserDirectory(username);
-            
-            alert('注册成功！现在您可以登录了。');
-            window.location.href = 'login.html';
-        })
-        .catch(error => {
-            console.error('Error saving user:', error);
-            alert('注册过程中发生错误，请重试。');
-        });
+// 异步保存新用户
+async function saveNewUserAsync(username, password) {
+    try {
+        // 获取现有的用户数据
+        let userData = '';
+        try {
+            const response = await fetch('Login/user.txt');
+            if (response.ok) {
+                userData = await response.text();
+                // 保存到localStorage以便后续使用
+                localStorage.setItem('userDatabase', userData);
+            }
+        } catch (error) {
+            // 如果无法从文件加载，则从localStorage获取
+            userData = localStorage.getItem('userDatabase') || '';
+        }
+        
+        // 添加新用户
+        const newUserEntry = `\n${username}:${password}`;
+        const updatedData = userData + newUserEntry;
+        
+        // 保存更新后的数据到localStorage
+        localStorage.setItem('userDatabase', updatedData);
+        
+        // 创建用户专属目录
+        createUserDirectory(username);
+        
+        alert('注册成功！现在您可以登录了。');
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('保存新用户时出错:', error);
+        alert('注册过程中发生错误，请重试。');
+    }
 }
 
 function createUserDirectory(username) {
