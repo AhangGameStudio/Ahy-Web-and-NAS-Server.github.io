@@ -79,6 +79,7 @@ function handleFiles(files) {
     if (files.length > 0) {
         // 禁用上传区域点击事件，防止重复选择
         uploadArea.style.pointerEvents = 'none';
+        uploadArea.style.opacity = '0.8';
         
         // 显示选中的文件数量
         const fileCount = files.length;
@@ -101,6 +102,7 @@ function resetUploadArea() {
     uploadBtn.disabled = true;
     // 重新启用上传区域点击事件
     uploadArea.style.pointerEvents = 'auto';
+    uploadArea.style.opacity = '1';
 }
 
 // 上传文件函数（手动点击上传按钮）
@@ -123,6 +125,7 @@ function uploadFiles() {
     
     // 禁用上传区域点击事件，防止重复选择
     uploadArea.style.pointerEvents = 'none';
+    uploadArea.style.opacity = '0.8';
     
     // 显示进度条
     progressContainer.style.display = 'block';
@@ -138,7 +141,6 @@ function uploadFiles() {
             // 上传完成后保存文件信息
             try {
                 saveFiles(files);
-                alert(`成功上传 ${files.length} 个文件！`);
             } catch (error) {
                 console.error('上传失败:', error);
                 alert('文件上传过程中发生错误，请重试');
@@ -173,8 +175,6 @@ function uploadFilesAuto(files) {
         if (!file.name || file.size <= 0) {
             alert('检测到无效文件，请重新选择文件');
             resetUploadArea();
-            // 重新启用上传区域点击事件
-            uploadArea.style.pointerEvents = 'auto';
             return;
         }
     }
@@ -193,7 +193,6 @@ function uploadFilesAuto(files) {
             // 上传完成后保存文件信息
             try {
                 saveFiles(files);
-                alert(`成功上传 ${files.length} 个文件！`);
             } catch (error) {
                 console.error('上传失败:', error);
                 alert('文件上传过程中发生错误，请重试');
@@ -211,9 +210,6 @@ function uploadFilesAuto(files) {
                 
                 // 重置上传区域
                 resetUploadArea();
-                
-                // 重新启用上传区域点击事件
-                uploadArea.style.pointerEvents = 'auto';
             }, 500);
         }
         
