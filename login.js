@@ -26,27 +26,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function validateCredentials(username, password) {
-    try {
-        // 使用认证模块验证凭据
-        const isAuthenticated = await validateCredentialsAsync(username, password);
+    // 使用认证模块验证凭据
+    const isAuthenticated = await validateCredentialsAsync(username, password);
+    
+    if (isAuthenticated) {
+        // 保存登录状态到本地存储
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('currentUser', username);
         
-        if (isAuthenticated) {
-            // 保存登录状态到本地存储
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', username);
-            
-            // 创建用户专属目录
-            createUserDirectory(username);
-            
-            // 跳转到主页面
-            alert('登录成功！');
-            window.location.href = 'index.html';
-        } else {
-            alert('用户名或密码错误，请重试。');
-        }
-    } catch (error) {
-        console.error('登录过程中发生错误:', error);
-        alert('登录过程中发生错误，请重试。');
+        // 创建用户专属目录
+        createUserDirectory(username);
+        
+        // 跳转到主页面
+        alert('登录成功！');
+        window.location.href = 'index.html';
+    } else {
+        alert('用户名或密码错误，请重试。');
     }
 }
 
@@ -54,60 +49,38 @@ async function validateCredentials(username, password) {
 async function validateCredentialsAsync(username, password) {
     try {
         // 直接使用auth.js模块中的函数
-        if (typeof validateCredentials === 'function') {
-            return await validateCredentials(username, password);
-        }
-        
-        // 备用实现
-        // 尝试从localStorage获取用户数据
-        const userData = localStorage.getItem('userDatabase');
-        if (userData) {
-            const lines = userData.split('\n');
-            
-            for (const line of lines) {
-                // 跳过注释行和空行
-                if (line.trim() === '' || line.startsWith('#')) {
-                    continue;
-                }
-                
-                // 解析用户名和密码
-                const [storedUsername, storedPassword] = line.split(':');
-                
-                if (storedUsername === username && storedPassword === password) {
+        if (typeof window.validateCredentialsFromAuth === 'function') {
+            // 先尝试使用本地验证
+            try {
+                const localResult = await window.validateCredentialsFromAuth(username, password);
+                if (localResult) {
                     return true;
                 }
+            } catch (localError) {
+                // 如果本地验证失败，继续尝试API验证
+                console.log('本地验证失败，尝试通过API验证');
             }
+        }
+        
+        // 通过API验证用户凭据
+        const response = await fetch('/www.ahangya.cyou/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        if (!response.ok) {
+            // 如果响应不是OK，返回false表示验证失败
             return false;
         }
         
-        // 如果localStorage中没有数据，则从user.txt文件加载
-        const response = await fetch('Login/user.txt');
-        if (!response.ok) {
-            throw new Error('无法加载用户数据');
-        }
-        
-        const data = await response.text();
-        // 保存到localStorage以便后续使用
-        localStorage.setItem('userDatabase', data);
-        
-        const lines = data.split('\n');
-        for (const line of lines) {
-            // 跳过注释行和空行
-            if (line.trim() === '' || line.startsWith('#')) {
-                continue;
-            }
-            
-            // 解析用户名和密码
-            const [storedUsername, storedPassword] = line.split(':');
-            
-            if (storedUsername === username && storedPassword === password) {
-                return true;
-            }
-        }
-        
-        return false;
+        const result = await response.json();
+        return result.success || false;
     } catch (error) {
         console.error('验证用户凭据时出错:', error);
+        // 即使出现错误，也要避免重复弹窗，只返回false
         return false;
     }
 }

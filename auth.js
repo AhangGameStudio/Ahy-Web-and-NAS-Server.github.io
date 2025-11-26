@@ -1,12 +1,15 @@
 // auth.js - 用户认证功能模块
 
-// 从user.txt文件加载用户数据
+// 将验证函数暴露给window对象
+window.validateCredentialsFromAuth = validateCredentials;
+
+// 从localStorage加载用户数据
 function loadUserData() {
     // 在纯前端环境中，我们不能直接读取文件系统中的文件
     // 因此我们使用localStorage作为替代方案
     const userData = localStorage.getItem('userDatabase');
     if (userData) {
-        return userData;
+        return Promise.resolve(userData);
     }
     
     // 如果localStorage中没有用户数据，则从user.txt文件加载
@@ -26,7 +29,7 @@ function loadUserData() {
         .catch(error => {
             console.error('加载用户数据失败:', error);
             // 返回默认的用户数据
-            const defaultUsers = 'admin:123456\nuser:password';
+            const defaultUsers = '# 用户登录信息文件\n# 格式: username:password\n# 示例:\nadmin:123456\nuser:password';
             localStorage.setItem('userDatabase', defaultUsers);
             return defaultUsers;
         });
@@ -101,6 +104,30 @@ async function addUser(username, password) {
         
         // 保存更新后的数据到localStorage
         localStorage.setItem('userDatabase', updatedData);
+        
+        // 通过API将新用户信息发送到服务器
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API注册失败:', errorData.message || '未知错误');
+            } else {
+                const result = await response.json();
+                console.log('用户通过API注册成功:', result);
+            }
+        } catch (apiError) {
+            console.error('API调用失败:', apiError);
+            // 即使API调用失败，我们仍然在本地保存用户数据
+        }
+        
+        console.log(`用户 ${username} 已添加到数据库`);
         
         return true;
     } catch (error) {
