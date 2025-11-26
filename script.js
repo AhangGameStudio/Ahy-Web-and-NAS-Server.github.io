@@ -348,30 +348,10 @@ async function checkAndConvertNCMFiles(files) {
                 processedFiles.push(file);
             }
         } else if (file.name.toLowerCase().endsWith('.ncm')) {
-            // 如果文件扩展名是.ncm但文件头不匹配，仍然尝试转换
-            try {
-                // 显示转换提示
-                alert(`检测到NCM格式文件: ${file.name}\n正在尝试转换为MP3格式...`);
-                
-                // 模拟转换过程
-                const convertedFileName = file.name.replace(/\.ncm$/i, '.mp3');
-                
-                // 创建一个新的Blob对象模拟转换后的文件
-                const convertedFile = new File([file], convertedFileName, {
-                    type: 'audio/mpeg',
-                    lastModified: Date.now()
-                });
-                
-                processedFiles.push(convertedFile);
-                
-                // 显示转换完成提示
-                alert(`${file.name} 已模拟转换为 ${convertedFileName}`);
-            } catch (error) {
-                console.error('NCM转换失败:', error);
-                alert(`NCM文件 ${file.name} 转换失败: ${error.message}`);
-                // 如果转换失败，仍然添加原始文件
-                processedFiles.push(file);
-            }
+            // 如果文件扩展名是.ncm但文件头不匹配，显示警告但仍然尝试处理
+            alert(`检测到.ncm扩展名文件: ${file.name}\n注意：该文件可能不是有效的NCM格式，将作为普通文件处理。`);
+            // 直接添加原始文件
+            processedFiles.push(file);
         } else {
             // 非NCM文件直接添加
             processedFiles.push(file);
@@ -387,11 +367,17 @@ async function detectNCMFile(file) {
     const ncmHeader = "4354454e4644414d"; // "CTENFDAM" 的十六进制表示
     
     try {
+        // 确保文件大小足够
+        if (file.size < 8) {
+            return false;
+        }
+        
         const arrayBuffer = await file.slice(0, 8).arrayBuffer();
         const header = Array.from(new Uint8Array(arrayBuffer))
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
         
+        console.log(`文件 ${file.name} 的文件头: ${header}`);
         return header === ncmHeader;
     } catch (error) {
         console.error('检测NCM文件时出错:', error);
