@@ -105,6 +105,15 @@ function uploadFiles() {
         return;
     }
     
+    // 验证文件
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.name || file.size <= 0) {
+            alert('检测到无效文件，请重新选择文件');
+            return;
+        }
+    }
+    
     // 显示进度条
     progressContainer.style.display = 'block';
     
@@ -117,7 +126,13 @@ function uploadFiles() {
             clearInterval(interval);
             
             // 上传完成后保存文件信息
-            saveFiles(files);
+            try {
+                saveFiles(files);
+                alert(`成功上传 ${files.length} 个文件！`);
+            } catch (error) {
+                console.error('上传失败:', error);
+                alert('文件上传过程中发生错误，请重试');
+            }
             
             // 隐藏进度条
             setTimeout(() => {
