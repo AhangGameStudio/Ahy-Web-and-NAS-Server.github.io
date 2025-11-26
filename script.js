@@ -77,6 +77,9 @@ function handleFiles(files) {
     
     // 如果选择了文件，立即开始上传
     if (files.length > 0) {
+        // 禁用上传区域点击事件，防止重复选择
+        uploadArea.style.pointerEvents = 'none';
+        
         // 显示选中的文件数量
         const fileCount = files.length;
         const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0);
@@ -96,6 +99,8 @@ function resetUploadArea() {
     uploadArea.querySelector('.upload-placeholder p').innerHTML = 
         '点击选择文件或拖拽文件到此处<br><span class="file-types">支持视频、图片、音频、文档等各类文件</span>';
     uploadBtn.disabled = true;
+    // 重新启用上传区域点击事件
+    uploadArea.style.pointerEvents = 'auto';
 }
 
 // 上传文件函数（手动点击上传按钮）
@@ -115,6 +120,9 @@ function uploadFiles() {
             return;
         }
     }
+    
+    // 禁用上传区域点击事件，防止重复选择
+    uploadArea.style.pointerEvents = 'none';
     
     // 显示进度条
     progressContainer.style.display = 'block';
@@ -165,6 +173,8 @@ function uploadFilesAuto(files) {
         if (!file.name || file.size <= 0) {
             alert('检测到无效文件，请重新选择文件');
             resetUploadArea();
+            // 重新启用上传区域点击事件
+            uploadArea.style.pointerEvents = 'auto';
             return;
         }
     }
@@ -201,6 +211,9 @@ function uploadFilesAuto(files) {
                 
                 // 重置上传区域
                 resetUploadArea();
+                
+                // 重新启用上传区域点击事件
+                uploadArea.style.pointerEvents = 'auto';
             }, 500);
         }
         
