@@ -1,7 +1,136 @@
 // 文件数据存储在本地存储中
 // 上传的文件将显示在"Save-Fill"文件夹中
-const FILES_KEY = 'nas_files';
-let uploadedFiles = JSON.parse(localStorage.getItem(FILES_KEY)) || [];
+let currentUserIPPrefix = null;
+let currentStorageKey = null;
+
+// 初始化用户系统
+async function initializeUser() {
+    try {
+        // 获取用户IP前缀
+        const ipPrefix = await getUserIPPrefx();
+        
+        // 设置当前存储键
+        currentStorageKey = `nas_files_${ipPrefix}`;
+        
+        // 创建存储文件夹
+        createStorageFolder(ipPrefix);
+        
+        // 在UI中显示用户识别号
+        const currentUserElement = document.getElementById('currentUser');
+        if (currentUserElement) {
+            currentUserElement.textContent = `欢迎, ${ipPrefix}!`;
+        }
+        
+        console.log(`用户 ${ipPrefix} 初始化完成，存储键: ${currentStorageKey}`);
+        
+        // 加载用户的文件
+        loadUserFiles();
+        
+        // 初始化界面
+        renderFiles();
+    } catch (error) {
+        console.error('用户初始化失败:', error);
+        // 使用默认值
+        currentUserIPPrefix = 'guest';
+        currentStorageKey = 'nas_files_guest';
+        const currentUserElement = document.getElementById('currentUser');
+        if (currentUserElement) {
+            currentUserElement.textContent = '欢迎, 访客!';
+        }
+        
+        // 加载默认用户的文件
+        loadUserFiles();
+        
+        // 初始化界面
+        renderFiles();
+    }
+}
+
+// 获取用户IP前缀
+async function getUserIPPrefx() {
+    // 首先检查是否有用户手动输入的识别号
+    const manualId = localStorage.getItem('manual_user_id');
+    if (manualId) {
+        console.log('使用用户手动输入的识别号:', manualId);
+        return manualId;
+    }
+    
+    // 尝试多个IP获取服务
+    const ipServices = [
+        'https://api.ipify.org?format=json',
+        'https://ipinfo.io/json',
+        'https://api.my-ip.io/ip.json'
+    ];
+    
+    for (const service of ipServices) {
+        try {
+            // 设置超时时间
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+            
+            const response = await fetch(service, {
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            const data = await response.json();
+            
+            // 根据不同服务的响应格式提取IP
+            let ip;
+            if (data.ip) {
+                ip = data.ip;
+            } else if (data.query) {
+                ip = data.query;
+            }
+            
+            if (ip) {
+                // 提取IP地址的第一段作为识别号
+                const ipPrefix = ip.split('.')[0];
+                // 保存到localStorage以便后续使用
+                localStorage.setItem('user_ip_prefix', ipPrefix);
+                return ipPrefix;
+            }
+        } catch (error) {
+            console.error(`通过 ${service} 获取IP地址失败:`, error);
+            // 继续尝试下一个服务
+        }
+    }
+    
+    // 如果所有服务都失败，使用本地存储的IP或默认值
+    const storedIP = localStorage.getItem('user_ip_prefix');
+    if (storedIP) {
+        console.log('使用本地存储的IP前缀:', storedIP);
+        return storedIP;
+    }
+    
+    // 如果都没有，生成一个随机数作为用户标识
+    const randomId = Math.floor(Math.random() * 1000);
+    const randomPrefix = `user${randomId}`;
+    localStorage.setItem('user_ip_prefix', randomPrefix);
+    console.log('使用随机生成的用户标识:', randomPrefix);
+    return randomPrefix;
+}
+
+// 创建存储文件夹（在localStorage中模拟）
+function createStorageFolder(ipPrefix) {
+    // 在localStorage中创建一个标识，表示该IP前缀的用户已存在
+    const userExistsKey = `user_${ipPrefix}_exists`;
+    if (!localStorage.getItem(userExistsKey)) {
+        localStorage.setItem(userExistsKey, 'true');
+        console.log(`为用户 ${ipPrefix} 创建存储空间`);
+    }
+    
+    // 保存IP前缀到localStorage，以便在无法获取真实IP时使用
+    localStorage.setItem('user_ip_prefix', ipPrefix);
+}
+
+// 加载用户文件
+function loadUserFiles() {
+    uploadedFiles = JSON.parse(localStorage.getItem(currentStorageKey)) || [];
+}
+
+let uploadedFiles = [];
 
 // DOM元素
 const uploadArea = document.getElementById('uploadArea');
@@ -14,10 +143,8 @@ const filterButtons = document.querySelectorAll('.filter-btn');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 检查用户是否已登录
-    checkLoginStatus();
-    
-    renderFiles();
+    // 初始化用户
+    initializeUser();
     
     // 事件监听器
     uploadArea.addEventListener('click', handleUploadAreaClick);
@@ -38,6 +165,40 @@ document.addEventListener('DOMContentLoaded', function() {
             renderFiles(filterType);
         });
     });
+    
+    // 识别号输入框事件
+    const userIdInput = document.getElementById('userIdInput');
+    const saveUserIdBtn = document.getElementById('saveUserId');
+    
+    // 如果localStorage中有保存的识别号，则填充到输入框
+    const savedManualId = localStorage.getItem('manual_user_id');
+    if (savedManualId && userIdInput) {
+        userIdInput.value = savedManualId;
+    }
+    
+    // 保存识别号按钮事件
+    if (saveUserIdBtn) {
+        saveUserIdBtn.addEventListener('click', function() {
+            const userId = userIdInput ? userIdInput.value.trim() : '';
+            
+            if (userId) {
+                // 保存用户手动输入的识别号
+                localStorage.setItem('manual_user_id', userId);
+                localStorage.setItem('user_ip_prefix', userId);
+                alert(`识别号 "${userId}" 已保存！页面将重新加载以应用更改。`);
+                
+                // 重新初始化用户系统
+                location.reload();
+            } else {
+                // 如果输入为空，清除手动设置的识别号
+                localStorage.removeItem('manual_user_id');
+                alert('已清除手动识别号，将使用自动生成的识别号。页面将重新加载。');
+                
+                // 重新初始化用户系统
+                location.reload();
+            }
+        });
+    }
 });
 
 // 处理上传区域点击事件
@@ -48,35 +209,7 @@ function handleUploadAreaClick() {
     }
 }
 
-// 检查用户登录状态
-function checkLoginStatus() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
-    if (!isLoggedIn) {
-        // 用户未登录，重定向到登录页面
-        window.location.href = 'login.html';
-    } else {
-        // 用户已登录，显示用户信息
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            document.getElementById('currentUser').textContent = `欢迎, ${currentUser}!`;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            
-            // 初始化NAS组功能
-            initNASGroupFeature();
-        }
-    }
-}
 
-// 注销功能
-function logout() {
-    // 清除登录状态
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('currentUser');
-    
-    // 重定向到登录页面
-    window.location.href = 'login.html';
-}
 
 // 拖拽事件处理
 function handleDragOver(e) {
@@ -199,8 +332,10 @@ function saveFiles(files) {
         uploadedFiles.push(fileObj);
     });
     
-    // 保存到本地存储
-    localStorage.setItem(FILES_KEY, JSON.stringify(uploadedFiles));
+    // 保存到本地存储，使用基于IP的存储键
+    if (currentStorageKey) {
+        localStorage.setItem(currentStorageKey, JSON.stringify(uploadedFiles));
+    }
     
     // 重新渲染文件列表
     renderFiles();
@@ -255,17 +390,44 @@ function renderFiles(filterType = 'all') {
         let previewHTML = '';
         if (file.type.startsWith('image/')) {
             previewHTML = `<div class="file-preview"><img src="${file.url}" alt="${file.name}"></div>`;
+        } else if (file.type.startsWith('video/')) {
+            // 视频预览
+            previewHTML = `
+                <div class="file-preview">
+                    <video controls width="100%" height="150">
+                        <source src="${file.url}" type="${file.type}">
+                        您的浏览器不支持视频播放。
+                    </video>
+                </div>
+            `;
+        } else if (file.type.startsWith('audio/')) {
+            // 音频预览
+            previewHTML = `
+                <div class="file-preview">
+                    <audio controls style="width: 100%; margin-top: 10px;">
+                        <source src="${file.url}" type="${file.type}">
+                        您的浏览器不支持音频播放。
+                    </audio>
+                </div>
+            `;
         } else {
             // 文件图标
             let iconClass = '📁';
-            if (file.type.startsWith('video/')) iconClass = '🎬';
-            if (file.type.startsWith('audio/')) iconClass = '🎵';
             if (file.type.includes('pdf')) iconClass = '📄';
             if (file.type.includes('zip') || file.type.includes('rar')) iconClass = '📦';
             
             previewHTML = `<div class="file-preview"><div class="file-icon">${iconClass}</div></div>`;
         }
         
+        // 为视频文件添加转码按钮
+        let extraActions = '';
+        if (file.type.startsWith('video/')) {
+            extraActions = `
+                <button class="action-btn transcode-btn" onclick="transcodeVideo('${file.id}', '1080P')">转码1080P</button>
+                <button class="action-btn transcode-btn" onclick="transcodeVideo('${file.id}', '4K')">转码4K</button>
+            `;
+        }
+
         fileCard.innerHTML = `
             ${previewHTML}
             <div class="file-info">
@@ -273,6 +435,7 @@ function renderFiles(filterType = 'all') {
                 <div class="file-size">${formatFileSize(file.size)}</div>
                 <div class="file-actions">
                     <button class="action-btn download-btn" onclick="downloadFile('${file.id}')">下载</button>
+                    ${extraActions}
                     <button class="action-btn delete-btn" onclick="deleteFile('${file.id}')">删除</button>
                 </div>
             </div>
@@ -304,15 +467,69 @@ function deleteFile(fileId) {
     // 从数组中移除
     uploadedFiles = uploadedFiles.filter(file => file.id != fileId);
     
-    // 更新本地存储
-    localStorage.setItem(FILES_KEY, JSON.stringify(uploadedFiles));
+    // 更新本地存储，使用基于IP的存储键
+    if (currentStorageKey) {
+        localStorage.setItem(currentStorageKey, JSON.stringify(uploadedFiles));
+    }
     
     // 重新渲染
     renderFiles(document.querySelector('.filter-btn.active').dataset.filter);
 }
 
+// 转码视频
+async function transcodeVideo(fileId, resolution) {
+    const file = uploadedFiles.find(f => f.id == fileId);
+    if (!file) return;
+    
+    try {
+        // 显示转码提示
+        alert(`开始转码视频 ${file.name} 到 ${resolution}...`);
+        
+        // 获取原始文件（需要从localStorage或其他地方获取原始文件blob）
+        // 这里我们模拟转码过程
+        const transcodedFile = await videoTranscoder[`transcodeTo${resolution}`](new Blob(), file);
+        
+        // 添加转码后的文件到文件列表
+        const fileObj = {
+            id: Date.now() + Math.random(),
+            name: transcodedFile.name,
+            size: transcodedFile.size,
+            type: transcodedFile.type,
+            lastModified: Date.now(),
+            url: URL.createObjectURL(transcodedFile)
+        };
+        
+        uploadedFiles.push(fileObj);
+        
+        // 保存到本地存储
+        if (currentStorageKey) {
+            localStorage.setItem(currentStorageKey, JSON.stringify(uploadedFiles));
+        }
+        
+        // 重新渲染文件列表
+        renderFiles();
+        
+        alert(`视频 ${file.name} 已成功转码到 ${resolution}!`);
+    } catch (error) {
+        console.error('视频转码失败:', error);
+        alert(`视频转码失败: ${error.message}`);
+    }
+}
+
 // 检测NCM文件并转换
 async function checkAndConvertNCMFiles(files) {
+    // 检查是否在本地环境运行
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.hostname === '[::1]' ||
+                        window.location.protocol === 'file:';
+    
+    if (!isLocalhost) {
+        // 在GitHub Pages等远程环境中，显示提示信息
+        console.log('NCM转换功能在静态托管环境下功能受限');
+        return files; // 直接返回原文件
+    }
+    
     const processedFiles = [];
     
     for (const file of files) {

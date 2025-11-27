@@ -11,9 +11,13 @@
         <header>
         <h1>云NAS存储系统</h1>
         <p>安全存储您的视频、图片、音频和文件</p>
+        <div class="user-id-input">
+            <label for="userIdInput">请输入您的识别号:</label>
+            <input type="text" id="userIdInput" placeholder="留空则自动生成">
+            <button id="saveUserId">保存识别号</button>
+        </div>
         <div class="user-info" id="userInfo">
-            <span id="currentUser"></span>
-            <button id="logoutBtn" class="logout-btn">注销</button>
+            <span id="currentUser">欢迎, 访客!</span>
             <div id="nasGroupInfo" style="font-size: 0.9rem; color: #fff;"></div>
         </div>
     </header>
@@ -58,9 +62,7 @@
 </footer>
     </div>
     
-    <script src="init-users.js"></script>
-    <script src="auth.js"></script>
+    <script src="video-transcoder.js"></script>
     <script src="script.js"></script>
-    <script src="nas-group.js"></script>
 </body>
 </html>

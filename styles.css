@@ -273,6 +273,11 @@ h2 {
     color: white;
 }
 
+.transcode-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
 .action-btn:hover {
     opacity: 0.9;
     transform: scale(1.05);
@@ -287,6 +292,49 @@ h2 {
 
 .empty-state p {
     font-size: 1.2rem;
+}
+
+/* 用户识别号输入样式 */
+.user-id-input {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.user-id-input label {
+    color: white;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.user-id-input input {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    min-width: 150px;
+}
+
+.user-id-input button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.user-id-input button:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* 用户信息样式 */
